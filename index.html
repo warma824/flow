@@ -1,0 +1,767 @@
+!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Flow">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1117" media="(prefers-color-scheme: dark)">
+<title>Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1a2035;
+    --amber: #e8a246;
+    --amber-soft: rgba(232,162,70,0.12);
+    --teal: #3dbfa8;
+    --teal-soft: rgba(61,191,168,0.1);
+    --rose: #e06b6b;
+    --rose-soft: rgba(224,107,107,0.1);
+    --purple: #7c6fcd;
+    --purple-soft: rgba(124,111,205,0.1);
+    --bg: #f7f8fc;
+    --card: #ffffff;
+    --text: #1a2035;
+    --muted: #8891aa;
+    --border: rgba(0,0,0,0.07);
+    --night-band: rgba(15,17,23,0.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1117;
+      --card: #1a2035;
+      --text: #eef0f7;
+      --muted: #5a6380;
+      --border: rgba(255,255,255,0.07);
+      --night-band: rgba(255,255,255,0.03);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+  #app { height: 100dvh; max-width: 430px; margin: 0 auto; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+
+  /* HEADER */
+  .header { background: var(--card); border-bottom: 1px solid var(--border); padding: max(env(safe-area-inset-top), 48px) 20px 16px; flex-shrink: 0; }
+  .header-row { display: flex; align-items: flex-end; justify-content: space-between; }
+  .header-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--text); line-height: 1; }
+  .header-title em { font-style: italic; color: var(--amber); }
+  .header-sub { font-size: 12px; color: var(--muted); font-weight: 500; margin-top: 4px; letter-spacing: 0.2px; }
+  .date-nav { display: flex; align-items: center; gap: 10px; }
+  .date-nav-btn { width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--bg); color: var(--muted); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .date-nav-btn:active { background: var(--amber-soft); color: var(--amber); border-color: var(--amber); }
+  .date-nav.hidden { visibility: hidden; }
+  .date-label { font-size: 13px; font-weight: 600; color: var(--text); min-width: 70px; text-align: center; }
+
+  /* TABS */
+  .nav-tabs { display: flex; background: var(--card); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .nav-tab { flex: 1; padding: 12px 4px 10px; font-size: 11px; font-weight: 600; color: var(--muted); background: none; border: none; border-bottom: 2.5px solid transparent; cursor: pointer; font-family: 'DM Sans', sans-serif; letter-spacing: 0.3px; text-transform: uppercase; transition: all 0.2s; }
+  .nav-tab.active { color: var(--amber); border-bottom-color: var(--amber); }
+
+  /* BODY */
+  .body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(env(safe-area-inset-bottom,0px) + 110px); transition: opacity 0.12s; }
+
+  /* STATS ROW */
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .stat-card { background: var(--card); border-radius: 14px; padding: 12px; border: 1px solid var(--border); }
+  .stat-label { font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+  .stat-val { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text); line-height: 1; }
+  .stat-val.good { color: var(--teal); }
+  .stat-val.warn { color: var(--amber); }
+  .stat-val.bad  { color: var(--rose); }
+  .stat-sub { font-size: 10px; font-weight: 500; color: var(--muted); margin-top: 3px; }
+
+  /* NIGHT CARD */
+  .night-card { background: var(--navy); border-radius: 18px; padding: 16px 18px; margin-bottom: 14px; position: relative; overflow: hidden; }
+  .night-card::before { content: '🌙'; position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 38px; opacity: 0.18; }
+  .night-card-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+  .night-card-main { font-family: 'DM Serif Display', serif; font-size: 32px; color: white; line-height: 1; }
+  .night-card-main span { font-size: 15px; font-family: 'DM Sans', sans-serif; font-weight: 500; opacity: 0.6; margin-left: 4px; }
+  .night-card-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 6px; font-weight: 500; }
+  .night-card-sub strong { color: rgba(255,255,255,0.8); font-weight: 600; }
+
+  /* TIMELINE */
+  .timeline-section-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin: 16px 0 8px 4px; display: flex; align-items: center; gap: 8px; }
+  .timeline-section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .night-band { background: var(--night-band); border-radius: 12px; padding: 4px 0; margin-bottom: 4px; border: 1px solid var(--border); }
+  .void-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; transition: background 0.15s; border-radius: 10px; }
+  .void-item:active { background: var(--amber-soft); }
+  .void-dot-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 12px; }
+  .void-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .void-dot.vol-none   { background: var(--border); border: 2px solid var(--muted); }
+  .void-dot.vol-small  { background: var(--teal); }
+  .void-dot.vol-medium { background: var(--amber); width: 12px; height: 12px; }
+  .void-dot.vol-large  { background: var(--rose); width: 14px; height: 14px; }
+  .void-line { width: 1.5px; background: var(--border); flex: 1; min-height: 14px; margin-top: 2px; }
+  .void-time { font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--text); flex-shrink: 0; width: 52px; }
+  .void-info { flex: 1; min-width: 0; }
+  .void-vol { font-size: 13px; font-weight: 600; color: var(--text); }
+  .void-gap { font-size: 11px; color: var(--muted); margin-top: 1px; font-weight: 500; }
+  .void-night-tag { font-size: 9px; font-weight: 700; color: rgba(232,162,70,0.9); background: rgba(232,162,70,0.12); padding: 2px 7px; border-radius: 99px; letter-spacing: 0.3px; flex-shrink: 0; }
+  .void-delete { background: none; border: none; color: var(--muted); font-size: 14px; cursor: pointer; padding: 4px; opacity: 0.5; }
+  .void-delete:active { opacity: 1; color: var(--rose); }
+  .empty-day { text-align: center; padding: 40px 20px; color: var(--muted); }
+  .empty-day .e-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-day p { font-size: 14px; font-weight: 500; }
+
+  /* INSIGHTS */
+  .insight-card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
+  .insight-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .bar-label { font-size: 12px; font-weight: 600; color: var(--muted); width: 36px; flex-shrink: 0; text-align: right; }
+  .bar-track { flex: 1; background: var(--bg); border-radius: 99px; height: 8px; overflow: hidden; }
+  .bar-fill { height: 8px; border-radius: 99px; transition: width 0.6s cubic-bezier(.34,1.26,.64,1); }
+  .bar-val { font-size: 11px; font-weight: 700; color: var(--text); width: 20px; flex-shrink: 0; }
+  .avg-line { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .avg-line:last-child { border-bottom: none; padding-bottom: 0; }
+  .avg-key { font-size: 13px; font-weight: 500; color: var(--text); }
+  .avg-val { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--amber); }
+  .trend-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 99px; }
+  .trend-up   { background: var(--teal-soft); color: var(--teal); }
+  .trend-down { background: var(--rose-soft); color: var(--rose); }
+  .trend-flat { background: var(--amber-soft); color: var(--amber); }
+
+  /* ── GUIDE TAB ── */
+  .guide-hero {
+    background: var(--navy);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .guide-hero::after {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: rgba(232,162,70,0.12);
+  }
+  .guide-hero-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 8px; }
+  .guide-hero-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: white; line-height: 1.2; margin-bottom: 10px; }
+  .guide-hero-body { font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.6; font-weight: 400; }
+  .guide-hero-body strong { color: rgba(255,255,255,0.9); font-weight: 600; }
+
+  .guide-target-card {
+    background: linear-gradient(135deg, rgba(232,162,70,0.15), rgba(232,162,70,0.05));
+    border: 1.5px solid rgba(232,162,70,0.3);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .guide-target-label { font-size: 10px; font-weight: 700; color: var(--amber); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+  .guide-target-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--text); margin-bottom: 6px; }
+  .guide-target-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .guide-target-body strong { color: var(--text); font-weight: 600; }
+
+  .guide-section { background: var(--card); border-radius: 16px; padding: 18px; margin-bottom: 12px; border: 1px solid var(--border); }
+  .guide-section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; cursor: pointer; }
+  .guide-section-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .guide-section-titles { flex: 1; }
+  .guide-section-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .guide-section-sub { font-size: 12px; color: var(--muted); margin-top: 2px; font-weight: 500; }
+  .guide-chevron { font-size: 16px; color: var(--muted); transition: transform 0.25s; }
+  .guide-section.open .guide-chevron { transform: rotate(90deg); }
+  .guide-section-body { display: none; }
+  .guide-section.open .guide-section-body { display: block; }
+
+  .guide-step { display: flex; gap: 12px; margin-bottom: 14px; }
+  .guide-step:last-child { margin-bottom: 0; }
+  .guide-step-num { width: 24px; height: 24px; border-radius: 50%; background: var(--amber); color: white; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .guide-step-num.teal   { background: var(--teal); }
+  .guide-step-num.purple { background: var(--purple); }
+  .guide-step-num.rose   { background: var(--rose); }
+  .guide-step-body { flex: 1; }
+  .guide-step-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .guide-step-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .guide-step-text strong { color: var(--text); font-weight: 600; }
+
+  .guide-divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+  .guide-tip-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .guide-tip-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .guide-tip-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .guide-tip-text { font-size: 13px; color: var(--text); line-height: 1.5; flex: 1; }
+  .guide-tip-text strong { font-weight: 700; }
+  .guide-tip-text em { color: var(--muted); font-style: normal; font-size: 12px; }
+
+  .urge-steps { counter-reset: urge; }
+  .urge-step { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .urge-step:last-child { border-bottom: none; padding-bottom: 0; }
+  .urge-num { width: 22px; height: 22px; border-radius: 50%; background: var(--purple-soft); color: var(--purple); font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .urge-text { font-size: 13px; color: var(--text); line-height: 1.5; flex: 1; }
+  .urge-text strong { font-weight: 700; color: var(--purple); }
+  .urge-text em { color: var(--muted); font-size: 12px; font-style: normal; }
+
+  .evidence-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: var(--teal); background: var(--teal-soft); padding: 3px 8px; border-radius: 99px; margin-top: 10px; }
+
+  /* FAB */
+  .fab-wrap { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; padding: 12px 16px calc(env(safe-area-inset-bottom,0px) + 12px); background: linear-gradient(to top, var(--bg) 60%, transparent); z-index: 10; }
+  .fab { width: 100%; padding: 16px; background: var(--navy); color: white; border: none; border-radius: 16px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; letter-spacing: 0.2px; box-shadow: 0 8px 24px rgba(26,32,53,0.25); transition: transform 0.15s, box-shadow 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .fab:active { transform: scale(0.98); }
+  .fab.hidden { display: none; }
+
+  /* MODAL */
+  .overlay { position: fixed; inset: 0; background: rgba(15,17,23,0.5); z-index: 100; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.25s; backdrop-filter: blur(4px); }
+  .overlay.open { opacity: 1; pointer-events: all; }
+  .sheet { background: var(--card); border-radius: 24px 24px 0 0; width: 100%; max-width: 430px; padding: 0 0 calc(env(safe-area-inset-bottom,0px) + 24px); transform: translateY(100%); transition: transform 0.3s cubic-bezier(.34,1.1,.64,1); }
+  .overlay.open .sheet { transform: translateY(0); }
+  .sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 99px; margin: 16px auto 4px; }
+  .sheet-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text); padding: 12px 24px 20px; }
+  .time-row { padding: 0 24px 20px; }
+  .time-display { font-family: 'DM Serif Display', serif; font-size: 52px; color: var(--text); text-align: center; letter-spacing: -1px; padding: 8px 16px; background: var(--bg); border-radius: 16px; border: 2px solid transparent; transition: border-color 0.2s; width: 100%; }
+  .time-display:focus { outline: none; border-color: var(--amber); }
+  .vol-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 0 24px; margin-bottom: 10px; }
+  .vol-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 24px 24px; }
+  .vol-btn { padding: 14px 10px; border-radius: 14px; border: 2px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; text-align: center; transition: all 0.15s; }
+  .vol-btn .vol-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+  .vol-btn.selected.v-none   { border-color: var(--muted); background: rgba(0,0,0,0.04); color: var(--text); }
+  .vol-btn.selected.v-small  { border-color: var(--teal); background: var(--teal-soft); color: var(--text); }
+  .vol-btn.selected.v-medium { border-color: var(--amber); background: var(--amber-soft); color: var(--text); }
+  .vol-btn.selected.v-large  { border-color: var(--rose); background: var(--rose-soft); color: var(--text); }
+  .sheet-actions { display: flex; gap: 10px; padding: 0 24px; }
+  .btn-cancel { flex: 1; padding: 14px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; }
+  .btn-log { flex: 2; padding: 14px; border-radius: 14px; border: none; background: var(--navy); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; color: white; cursor: pointer; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: calc(env(safe-area-inset-bottom,0px) + 100px); left: 50%; transform: translateX(-50%) translateY(10px); background: var(--navy); color: white; padding: 10px 18px; border-radius: 12px; font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none; transition: all 0.2s; z-index: 200; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="header-row">
+      <div>
+        <div class="header-title">Fl<em>o</em>w</div>
+        <div class="header-sub">Bladder training · nocturia focus</div>
+      </div>
+      <div class="date-nav" id="dateNav">
+        <button class="date-nav-btn" onclick="changeDay(-1)">‹</button>
+        <div class="date-label" id="dateLabel"></div>
+        <button class="date-nav-btn" onclick="changeDay(1)">›</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" id="tabLog" onclick="showTab('log')">Log</button>
+    <button class="nav-tab" id="tabInsights" onclick="showTab('insights')">Insights</button>
+    <button class="nav-tab" id="tabGuide" onclick="showTab('guide')">Guide</button>
+  </div>
+
+  <div class="body" id="mainBody"></div>
+
+  <div class="fab-wrap">
+    <button class="fab" id="fab" onclick="openLogModal()">
+      <span style="font-size:18px">+</span> Log void
+    </button>
+  </div>
+</div>
+
+<!-- LOG MODAL -->
+<div class="overlay" id="logOverlay" onclick="overlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="sheetTitle">Log a void</div>
+    <div class="time-row">
+      <input class="time-display" type="time" id="timeInput" value="00:00">
+    </div>
+    <div class="vol-label">Volume passed</div>
+    <div class="vol-grid">
+      <button class="vol-btn v-none" onclick="selectVol('none')"><span class="vol-icon">○</span>Nothing / attempted</button>
+      <button class="vol-btn v-small" onclick="selectVol('small')"><span class="vol-icon">💧</span>Small</button>
+      <button class="vol-btn v-medium" onclick="selectVol('medium')"><span class="vol-icon">💧💧</span>Medium</button>
+      <button class="vol-btn v-large" onclick="selectVol('large')"><span class="vol-icon">💧💧💧</span>Large</button>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-log" onclick="saveVoid()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let currentTab = 'log';
+let viewDate = new Date(); viewDate.setHours(0,0,0,0);
+let selectedVol = 'medium';
+let editingId = null;
+
+const VOL_LABELS = { none: 'Nothing / attempted', small: 'Small', medium: 'Medium', large: 'Large' };
+
+// ═══════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════
+function loadVoids() { try { return JSON.parse(localStorage.getItem('flow_voids') || '[]'); } catch { return []; } }
+function saveVoids(v) { localStorage.setItem('flow_voids', JSON.stringify(v)); }
+
+// ═══════════════════════════════════════
+// DATE HELPERS
+// ═══════════════════════════════════════
+function fmtDate(d) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const yesterday = new Date(today); yesterday.setDate(today.getDate()-1);
+  if (d.getTime() === today.getTime()) return 'Today';
+  if (d.getTime() === yesterday.getTime()) return 'Yesterday';
+  return d.toLocaleDateString('en-NZ', { weekday:'short', day:'numeric', month:'short' });
+}
+function fmtTime(isoStr) {
+  const d = new Date(isoStr), h = d.getHours(), m = d.getMinutes();
+  return `${h%12||12}:${String(m).padStart(2,'0')}${h<12?'am':'pm'}`;
+}
+function isNightHour(isoStr) { const h = new Date(isoStr).getHours(); return h >= 22 || h < 7; }
+function minutesBetween(a, b) { return Math.round(Math.abs(new Date(b)-new Date(a))/60000); }
+function fmtGap(mins) {
+  if (mins < 60) return `${mins}m gap`;
+  const h = Math.floor(mins/60), m = mins%60;
+  return m > 0 ? `${h}h ${m}m gap` : `${h}h gap`;
+}
+
+// ═══════════════════════════════════════
+// RENDER ROUTER
+// ═══════════════════════════════════════
+function render() {
+  document.getElementById('dateLabel').textContent = fmtDate(viewDate);
+  document.getElementById('dateNav').style.visibility = currentTab === 'log' ? 'visible' : 'hidden';
+  document.getElementById('fab').className = currentTab === 'log' ? 'fab' : 'fab hidden';
+  ['log','insights','guide'].forEach(t => {
+    document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', currentTab === t);
+  });
+  const body = document.getElementById('mainBody');
+  if (currentTab === 'log') body.innerHTML = renderLog();
+  else if (currentTab === 'insights') body.innerHTML = renderInsights();
+  else body.innerHTML = renderGuide();
+}
+
+// ═══════════════════════════════════════
+// LOG TAB
+// ═══════════════════════════════════════
+function renderLog() {
+  const allVoids = loadVoids().sort((a,b) => new Date(a.time)-new Date(b.time));
+  const dayStart = new Date(viewDate), dayEnd = new Date(viewDate); dayEnd.setDate(dayEnd.getDate()+1);
+  const dayVoids = allVoids.filter(v => { const t=new Date(v.time); return t>=dayStart&&t<dayEnd; });
+
+  const nightStart = new Date(viewDate); nightStart.setHours(22,0,0,0);
+  const nightEnd = new Date(viewDate); nightEnd.setDate(nightEnd.getDate()+1); nightEnd.setHours(7,0,0,0);
+  const thisNightVoids = allVoids.filter(v => { const t=new Date(v.time); return t>=nightStart&&t<nightEnd; });
+
+  const prevNightStart = new Date(viewDate); prevNightStart.setDate(prevNightStart.getDate()-1); prevNightStart.setHours(22,0,0,0);
+  const prevNightEnd = new Date(viewDate); prevNightEnd.setHours(7,0,0,0);
+  const prevNightVoids = allVoids.filter(v => { const t=new Date(v.time); return t>=prevNightStart&&t<prevNightEnd; });
+
+  const daytimeVoids = dayVoids.filter(v => { const h=new Date(v.time).getHours(); return h>=7&&h<22; });
+  const noctCount = prevNightVoids.length;
+
+  let maxGap = 0;
+  for (let i=1; i<daytimeVoids.length; i++) {
+    const g = minutesBetween(daytimeVoids[i-1].time, daytimeVoids[i].time);
+    if (g > maxGap) maxGap = g;
+  }
+
+  const noctColor = noctCount === 0 ? 'good' : noctCount === 1 ? 'warn' : 'bad';
+  const freqColor = daytimeVoids.length <= 7 ? 'good' : daytimeVoids.length <= 9 ? 'warn' : 'bad';
+
+  let html = `<div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Night wakes</div>
+      <div class="stat-val ${noctColor}">${noctCount}</div>
+      <div class="stat-sub">prev. night</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Daytime voids</div>
+      <div class="stat-val ${freqColor}">${daytimeVoids.length}</div>
+      <div class="stat-sub">7am – 10pm</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Longest gap</div>
+      <div class="stat-val">${maxGap>0?Math.floor(maxGap/60)+'h'+Math.round(maxGap%60)+'m':'—'}</div>
+      <div class="stat-sub">daytime</div>
+    </div>
+  </div>`;
+
+  html += `<div class="night-card">
+    <div class="night-card-label">Night before (10pm – 7am)</div>
+    <div class="night-card-main">${noctCount}<span>${noctCount===1?'wake':'wakes'}</span></div>
+    <div class="night-card-sub">${noctCount===0?'<strong>Uninterrupted sleep 🎉</strong>':noctCount===1?'<strong>1 wake</strong> — mild nocturia':`<strong>${noctCount} wakes</strong> — keep training`}</div>
+  </div>`;
+
+  if (dayVoids.length === 0) {
+    return html + `<div class="empty-day"><div class="e-icon">💧</div><p>No voids logged for ${fmtDate(viewDate).toLowerCase()}</p></div>`;
+  }
+
+  if (prevNightVoids.length > 0) {
+    html += `<div class="timeline-section-label">🌙 Previous night</div><div class="night-band">${renderVoidItems(prevNightVoids)}</div>`;
+  }
+  if (daytimeVoids.length > 0) {
+    html += `<div class="timeline-section-label">☀️ Daytime</div>${renderVoidItems(daytimeVoids)}`;
+  }
+  if (thisNightVoids.length > 0) {
+    html += `<div class="timeline-section-label">🌙 Tonight</div><div class="night-band">${renderVoidItems(thisNightVoids)}</div>`;
+  }
+  return html;
+}
+
+function renderVoidItems(voids) {
+  return voids.map((v,i) => {
+    const gap = i > 0 ? minutesBetween(voids[i-1].time, v.time) : null;
+    return `<div class="void-item" onclick="editVoid('${v.id}')">
+      <div class="void-dot-col">
+        <div class="void-dot vol-${v.volume}"></div>
+        ${i<voids.length-1?'<div class="void-line"></div>':''}
+      </div>
+      <div class="void-time">${fmtTime(v.time)}</div>
+      <div class="void-info">
+        <div class="void-vol">${VOL_LABELS[v.volume]}</div>
+        <div class="void-gap">${gap!==null?fmtGap(gap):'First of session'}</div>
+      </div>
+      ${isNightHour(v.time)?'<div class="void-night-tag">NIGHT</div>':''}
+      <button class="void-delete" onclick="deleteVoid(event,'${v.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// INSIGHTS TAB
+// ═══════════════════════════════════════
+function getLast14Days() {
+  const allVoids = loadVoids().sort((a,b)=>new Date(a.time)-new Date(b.time));
+  const days = [];
+  for (let i=13; i>=0; i--) {
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-i);
+    const pns = new Date(d); pns.setDate(pns.getDate()-1); pns.setHours(22,0,0,0);
+    const pne = new Date(d); pne.setHours(7,0,0,0);
+    const ds = new Date(d); ds.setHours(7,0,0,0);
+    const de = new Date(d); de.setHours(22,0,0,0);
+    const nightVoids = allVoids.filter(v=>{const t=new Date(v.time);return t>=pns&&t<pne;});
+    const dayVoids   = allVoids.filter(v=>{const t=new Date(v.time);return t>=ds&&t<de;});
+    if (nightVoids.length>0||dayVoids.length>0) days.push({date:d, nocturia:nightVoids.length, daytime:dayVoids.length});
+  }
+  return days;
+}
+
+function renderInsights() {
+  const days = getLast14Days();
+  if (days.length < 2) return `<div class="empty-day"><div class="e-icon">📊</div><p>Log a few days of voids to see insights</p></div>`;
+
+  const avgNoct = days.reduce((s,d)=>s+d.nocturia,0)/days.length;
+  const avgDay  = days.reduce((s,d)=>s+d.daytime,0)/days.length;
+  const half = Math.floor(days.length/2);
+  const avgNoct1 = days.slice(0,half).reduce((s,d)=>s+d.nocturia,0)/half;
+  const avgNoct2 = days.slice(half).reduce((s,d)=>s+d.nocturia,0)/(days.length-half);
+  const noctTrend = avgNoct2 < avgNoct1-0.2 ? 'improving' : avgNoct2 > avgNoct1+0.2 ? 'worsening' : 'stable';
+  const maxNoct = Math.max(...days.map(d=>d.nocturia),1);
+  const maxDay  = Math.max(...days.map(d=>d.daytime),1);
+  const zeroNights = days.filter(d=>d.nocturia===0).length;
+
+  let best=0,cur=0;
+  days.forEach(d=>{if(d.nocturia===0){cur++;if(cur>best)best=cur;}else cur=0;});
+
+  const trendLabel = noctTrend==='improving'?'↓ Improving':noctTrend==='worsening'?'↑ Getting worse':'→ Stable';
+  const trendClass = noctTrend==='improving'?'trend-up':noctTrend==='worsening'?'trend-down':'trend-flat';
+
+  return `
+  <div class="insight-card">
+    <div class="insight-title">Night wakes — last ${days.length} days</div>
+    ${days.map(d=>{
+      const pct=Math.round((d.nocturia/maxNoct)*100);
+      const col=d.nocturia===0?'#3dbfa8':d.nocturia===1?'#e8a246':'#e06b6b';
+      return `<div class="bar-row">
+        <div class="bar-label">${d.date.toLocaleDateString('en-NZ',{weekday:'short'})}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(pct,4)}%;background:${col}"></div></div>
+        <div class="bar-val">${d.nocturia}</div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div class="insight-card">
+    <div class="insight-title">Averages</div>
+    <div class="avg-line"><div class="avg-key">Night wakes (avg)</div><div class="avg-val">${avgNoct.toFixed(1)}</div></div>
+    <div class="avg-line"><div class="avg-key">Daytime voids (avg)</div><div class="avg-val">${avgDay.toFixed(1)}</div></div>
+    <div class="avg-line" style="border-bottom:none;padding-bottom:0"><div class="avg-key">Nocturia trend</div><div class="trend-chip ${trendClass}">${trendLabel}</div></div>
+  </div>
+  <div class="insight-card">
+    <div class="insight-title">Daytime frequency — last ${days.length} days</div>
+    ${days.map(d=>{
+      const pct=Math.round((d.daytime/maxDay)*100);
+      const col=d.daytime<=7?'#3dbfa8':d.daytime<=9?'#e8a246':'#e06b6b';
+      return `<div class="bar-row">
+        <div class="bar-label">${d.date.toLocaleDateString('en-NZ',{weekday:'short'})}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(pct,4)}%;background:${col}"></div></div>
+        <div class="bar-val">${d.daytime}</div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div class="insight-card">
+    <div class="insight-title">Wins 🏆</div>
+    <div class="avg-line"><div class="avg-key">Uninterrupted nights</div><div class="avg-val" style="color:var(--teal)">${zeroNights}</div></div>
+    <div class="avg-line" style="border-bottom:none;padding-bottom:0"><div class="avg-key">Best zero-wake streak</div><div class="avg-val" style="color:var(--teal)">${best} night${best!==1?'s':''}</div></div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════
+// GUIDE TAB
+// ═══════════════════════════════════════
+function renderGuide() {
+  // Personalise target based on data
+  const days = getLast14Days();
+  const avgNoct = days.length > 0 ? days.reduce((s,d)=>s+d.nocturia,0)/days.length : null;
+  const avgDay  = days.length > 0 ? days.reduce((s,d)=>s+d.daytime,0)/days.length : null;
+
+  let targetText = '';
+  if (avgNoct === null) {
+    targetText = `Your personalised targets will appear here once you've logged a few days. The clinical goal for nocturia is <strong>0–1 night wakes</strong>, and for daytime frequency <strong>4–7 voids</strong> per day.`;
+  } else {
+    const noctStatus = avgNoct <= 1 ? '✅ Within normal range' : avgNoct <= 2 ? '⚠️ Mildly elevated' : '🔴 Significantly elevated';
+    const dayStatus  = avgDay === null ? '' : avgDay <= 7 ? '✅ Within normal range' : avgDay <= 9 ? '⚠️ Mildly elevated' : '🔴 Elevated';
+    targetText = `Based on your last ${days.length} logged days: your average nocturia is <strong>${avgNoct.toFixed(1)} wake${avgNoct!==1?'s':''}/night</strong> (${noctStatus}), and daytime frequency is <strong>${avgDay.toFixed(1)} voids/day</strong> (${dayStatus}). Clinical goal: <strong>≤1 night wake</strong> and <strong>4–7 daytime voids</strong>.`;
+  }
+
+  return `
+  <div class="guide-hero">
+    <div class="guide-hero-label">Evidence-based programme</div>
+    <div class="guide-hero-title">Bladder Training for Nocturia & OAB</div>
+    <div class="guide-hero-body">Bladder training is a <strong>first-line, non-drug treatment</strong> for overactive bladder and nocturia with strong evidence behind it. It works by gradually retraining the neural pathways between your brain and bladder — improving functional capacity and reducing urgency over 6–12 weeks.</div>
+  </div>
+
+  <div class="guide-target-card">
+    <div class="guide-target-label">📍 Your current picture</div>
+    <div class="guide-target-title">Where you're at</div>
+    <div class="guide-target-body">${targetText}</div>
+  </div>
+
+  ${guideSection('timed', '⏱️', 'var(--amber-soft)', 'Timed Voiding', 'The core technique — gradually stretch your intervals', `
+    <div class="guide-step">
+      <div class="guide-step-num">1</div>
+      <div class="guide-step-body">
+        <div class="guide-step-title">Find your baseline interval</div>
+        <div class="guide-step-text">Look at your Log data. What's your <strong>average gap between daytime voids?</strong> That's your starting point. If it's 45 minutes, start there.</div>
+      </div>
+    </div>
+    <div class="guide-step">
+      <div class="guide-step-num">2</div>
+      <div class="guide-step-body">
+        <div class="guide-step-title">Void by the clock, not by urge</div>
+        <div class="guide-step-text">Set a fixed interval (e.g. every 60 minutes). <strong>Go to the toilet at that time regardless of urge</strong> — even if you don't feel the need. This breaks the habit of going "just in case."</div>
+      </div>
+    </div>
+    <div class="guide-step">
+      <div class="guide-step-num">3</div>
+      <div class="guide-step-body">
+        <div class="guide-step-title">Increase by 15 minutes each week</div>
+        <div class="guide-step-text">Once you're consistently comfortable at your current interval for <strong>3–4 days</strong>, add 15 minutes. Work towards a target of <strong>3–4 hours</strong> between voids.</div>
+      </div>
+    </div>
+    <div class="guide-step">
+      <div class="guide-step-num">4</div>
+      <div class="guide-step-body">
+        <div class="guide-step-title">Daytime only — don't disrupt sleep</div>
+        <div class="guide-step-text">Timed voiding applies <strong>during waking hours only</strong>. At night, focus on urge suppression (see below) and fluid management — not scheduled voiding.</div>
+      </div>
+    </div>
+    <div class="evidence-badge">✓ NICE & ICS Grade A evidence</div>
+  `)}
+
+  ${guideSection('urge', '🧠', 'var(--purple-soft)', 'Urge Suppression', 'What to do when the urge hits — the key night skill', `
+    <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px">When you wake at night with urgency, the instinct is to rush to the toilet. <strong style="color:var(--text)">Don't.</strong> Rushing reinforces urgency. Instead, use this sequence:</div>
+    <div class="urge-steps">
+      <div class="urge-step">
+        <div class="urge-num">1</div>
+        <div class="urge-text"><strong>Stay still. Don't rush.</strong> Sit on the edge of the bed. Movement intensifies urgency. <em>Stillness is your first tool.</em></div>
+      </div>
+      <div class="urge-step">
+        <div class="urge-num">2</div>
+        <div class="urge-text"><strong>Pelvic floor squeeze — 5 rapid contractions.</strong> A quick series of pelvic floor contractions sends an inhibitory signal to the detrusor muscle, reducing urgency. This is called the "freeze and squeeze" technique. <em>Works within 30–60 seconds for most people.</em></div>
+      </div>
+      <div class="urge-step">
+        <div class="urge-num">3</div>
+        <div class="urge-text"><strong>Distract your brain.</strong> Count backwards from 100 in 7s, name countries, do mental arithmetic — anything that occupies your prefrontal cortex. Urgency is partly a brain response; distraction dampens it. <em>Your goal is to wait for urgency to pass, not to resist it.</em></div>
+      </div>
+      <div class="urge-step">
+        <div class="urge-num">4</div>
+        <div class="urge-text"><strong>If urgency passes — try to go back to sleep.</strong> If it does not pass after 2–3 minutes, walk calmly (not urgently) to the toilet.</div>
+      </div>
+      <div class="urge-step">
+        <div class="urge-num">5</div>
+        <div class="urge-text"><strong>Log it.</strong> Note whether it was a successful suppress or a void, and the volume. Over weeks you'll see your suppression rate improve.</div>
+      </div>
+    </div>
+    <div class="evidence-badge">✓ Cognitive behavioural basis; RCT supported</div>
+  `)}
+
+  ${guideSection('fluid', '🫗', 'var(--teal-soft)', 'Fluid & Evening Management', 'When and what you drink matters as much as how much', `
+    <div class="guide-tip-row">
+      <div class="guide-tip-icon">⏰</div>
+      <div class="guide-tip-text"><strong>Front-load your fluids.</strong> Aim for most of your daily fluid intake before 6pm. After 6pm, sip rather than drink — especially in the 2 hours before bed. <em>This is one of the highest-impact changes for nocturia.</em></div>
+    </div>
+    <div class="guide-tip-row">
+      <div class="guide-tip-icon">📏</div>
+      <div class="guide-tip-text"><strong>Don't under-drink.</strong> Paradoxically, restricting fluids too much makes urine more concentrated, which irritates the bladder lining and worsens urgency. Aim for <strong>1.5–2L/day</strong>, mostly in the morning and early afternoon.</div>
+    </div>
+    <div class="guide-tip-row">
+      <div class="guide-tip-icon">☕</div>
+      <div class="guide-tip-text"><strong>Reduce caffeine, especially after noon.</strong> Caffeine is a direct bladder irritant and a diuretic. Coffee, tea, energy drinks, and cola all count. Try cutting to one morning coffee and observe the effect over a week.</div>
+    </div>
+    <div class="guide-tip-row">
+      <div class="guide-tip-icon">🍷</div>
+      <div class="guide-tip-text"><strong>Alcohol worsens nocturia significantly.</strong> It suppresses ADH (antidiuretic hormone), causing your kidneys to produce more urine overnight. Even 1–2 drinks in the evening can double nocturnal urine output.</div>
+    </div>
+    <div class="guide-tip-row">
+      <div class="guide-tip-icon">🧂</div>
+      <div class="guide-tip-text"><strong>Watch salt and high-fluid foods at dinner.</strong> Salty meals increase fluid retention during the day which is then released at night. Large portions of soup, fruit, or salad late at night also contribute.</div>
+    </div>
+    <div class="evidence-badge">✓ EAU Guidelines on Nocturia</div>
+  `)}
+
+  ${guideSection('sleep', '😴', 'rgba(124,111,205,0.1)', 'Sleep Hygiene for Nocturia', 'Better sleep architecture reduces waking generally', `
+    <div class="guide-tip-row">
+      <div class="guide-tip-icon">🌡️</div>
+      <div class="guide-tip-text"><strong>Keep your bedroom cool (16–19°C).</strong> A cooler body temperature reduces nocturnal polyuria (excess overnight urine production). Warm rooms are associated with more nocturnal voids.</div>
+    </div>
+    <div class="guide-tip-row">
+      <div class="guide-tip-icon">🦵</div>
+      <div class="guide-tip-text"><strong>Elevate your legs for 1 hour before bed.</strong> If you sit or stand a lot during the day, fluid pools in your legs. Lying down moves this fluid back into circulation where it becomes urine overnight. Elevation in the evening redistributes this earlier — so your kidneys process it before you sleep.</div>
+    </div>
+    <div class="guide-tip-row">
+      <div class="guide-tip-icon">📱</div>
+      <div class="guide-tip-text"><strong>Protect your sleep continuity.</strong> Light sleepers wake more easily — and once awake, any bladder sensation becomes conscious. Earplugs, eye masks, and avoiding screens for 30 minutes before bed all reduce unnecessary waking that triggers bladder awareness.</div>
+    </div>
+    <div class="guide-tip-row">
+      <div class="guide-tip-icon">🚽</div>
+      <div class="guide-tip-text"><strong>One planned void before bed — not two.</strong> Voiding twice before sleep ("just in case") can reduce functional bladder capacity over time. Go once, calmly, as part of your bedtime routine.</div>
+    </div>
+    <div class="evidence-badge">✓ EAU / ICS Nocturia Guidelines</div>
+  `)}
+
+  ${guideSection('progress', '📈', 'var(--teal-soft)', 'What Progress Looks Like', 'Set realistic expectations', `
+    <div class="guide-step">
+      <div class="guide-step-num teal">1–2</div>
+      <div class="guide-step-body">
+        <div class="guide-step-title">Weeks 1–2: Baseline awareness</div>
+        <div class="guide-step-text">You're logging, identifying patterns, and starting fluid management. Don't expect dramatic change yet — you're building data and habits.</div>
+      </div>
+    </div>
+    <div class="guide-step">
+      <div class="guide-step-num teal">3</div>
+      <div class="guide-step-body">
+        <div class="guide-step-title">Weeks 3–6: First improvements</div>
+        <div class="guide-step-text">Most people see <strong>daytime frequency reduce first</strong> — nocturia is slower to respond. You may notice urgency is easier to suppress. Keep extending your timed voiding interval.</div>
+      </div>
+    </div>
+    <div class="guide-step">
+      <div class="guide-step-num teal">4</div>
+      <div class="guide-step-body">
+        <div class="guide-step-title">Weeks 6–12: Nocturia response</div>
+        <div class="guide-step-text">Research shows significant nocturia improvement typically requires <strong>6–12 weeks</strong> of consistent bladder training. Nights with 0–1 wakes should become more frequent. Track your streak in Insights.</div>
+      </div>
+    </div>
+    <div class="guide-step">
+      <div class="guide-step-num teal">5</div>
+      <div class="guide-step-body">
+        <div class="guide-step-title">When to see a doctor</div>
+        <div class="guide-step-text">If you've followed this programme consistently for 12 weeks with no improvement, see your GP or a continence physiotherapist. Medications (desmopressin, antimuscarinics, mirabegron) or further investigation may be appropriate. <strong>Always rule out UTI, diabetes, or sleep apnoea</strong> if nocturia is severe or sudden-onset.</div>
+      </div>
+    </div>
+  `)}
+  <div style="height:4px"></div>`;
+}
+
+function guideSection(id, icon, iconBg, title, subtitle, content) {
+  return `<div class="guide-section" id="gs-${id}">
+    <div class="guide-section-header" onclick="toggleGuideSection('${id}')">
+      <div class="guide-section-icon" style="background:${iconBg}">${icon}</div>
+      <div class="guide-section-titles">
+        <div class="guide-section-title">${title}</div>
+        <div class="guide-section-sub">${subtitle}</div>
+      </div>
+      <div class="guide-chevron">›</div>
+    </div>
+    <div class="guide-section-body">${content}</div>
+  </div>`;
+}
+
+function toggleGuideSection(id) {
+  document.getElementById('gs-'+id).classList.toggle('open');
+}
+
+// ═══════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════
+function openLogModal() {
+  editingId = null;
+  document.getElementById('sheetTitle').textContent = 'Log a void';
+  const now = new Date();
+  document.getElementById('timeInput').value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  selectVol('medium');
+  document.getElementById('logOverlay').classList.add('open');
+}
+function editVoid(id) {
+  const v = loadVoids().find(x=>x.id===id);
+  if (!v) return;
+  editingId = id;
+  document.getElementById('sheetTitle').textContent = 'Edit void';
+  const t = new Date(v.time);
+  document.getElementById('timeInput').value = `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+  selectVol(v.volume);
+  document.getElementById('logOverlay').classList.add('open');
+}
+function closeModal() { document.getElementById('logOverlay').classList.remove('open'); }
+function overlayClick(e) { if (e.target===e.currentTarget) closeModal(); }
+function selectVol(vol) {
+  selectedVol = vol;
+  document.querySelectorAll('.vol-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelector(`.v-${vol}`).classList.add('selected');
+}
+function saveVoid() {
+  const timeVal = document.getElementById('timeInput').value;
+  if (!timeVal) return;
+  const [hh,mm] = timeVal.split(':').map(Number);
+  const dt = new Date(viewDate); dt.setHours(hh,mm,0,0);
+  const voids = loadVoids();
+  if (editingId) {
+    const idx = voids.findIndex(x=>x.id===editingId);
+    if (idx>=0) { voids[idx].time=dt.toISOString(); voids[idx].volume=selectedVol; }
+  } else {
+    voids.push({id:Date.now().toString(), time:dt.toISOString(), volume:selectedVol});
+  }
+  saveVoids(voids); closeModal(); render();
+  showToast(editingId?'Void updated':'Void logged ✓');
+}
+function deleteVoid(e,id) {
+  e.stopPropagation();
+  saveVoids(loadVoids().filter(x=>x.id!==id));
+  render(); showToast('Deleted');
+}
+
+// ═══════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════
+function changeDay(delta) { viewDate.setDate(viewDate.getDate()+delta); render(); }
+function showTab(tab) {
+  currentTab = tab;
+  const body = document.getElementById('mainBody');
+  body.style.opacity = '0';
+  setTimeout(()=>{ render(); body.style.opacity='1'; }, 120);
+}
+
+// ═══════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 2500);
+}
+
+render();
+</script>
+</body>
+</html>
